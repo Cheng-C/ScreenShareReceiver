@@ -47,6 +47,11 @@ public class ScreenDecoder implements Runnable {
     private ExecutorService executorService;
 
     private TcpConnection tcpConnection = TcpConnection.getInstance();
+    private CmdListener cmdListener;
+
+    public interface CmdListener {
+        void onReceiveDisconnectCmd();
+    }
 
     /**
      * @param surface 播放视频的Surface
@@ -57,8 +62,8 @@ public class ScreenDecoder implements Runnable {
      * @param bitRate 码率（每秒传送的比特数）
      * @param IFrameInterval I帧间隔
      */
-    public ScreenDecoder(Surface surface, int width, int height,
-                         String mimeType, int frameRate, int bitRate, int IFrameInterval) {
+    public ScreenDecoder(Surface surface, int width, int height, String mimeType, int frameRate,
+                         int bitRate, int IFrameInterval, CmdListener cmdListener) {
         this.surface = surface;
         this.width = width;
         this.height = height;
@@ -66,12 +71,13 @@ public class ScreenDecoder implements Runnable {
         this.frameRate = frameRate;
         this.bitRate = bitRate;
         this.IFrameInterval = IFrameInterval;
+        this.cmdListener = cmdListener;
         initThreadPool();
     }
 
-    public ScreenDecoder(Surface surface) {
-        this(surface, 1280, 1920,
-                "video/avc", 30, 6000000, 10);
+    public ScreenDecoder(Surface surface, CmdListener cmdListener) {
+        this(surface, 1280, 1920, "video/avc", 30,
+                6000000, 10, cmdListener);
     }
 
     private void initThreadPool() {
@@ -114,13 +120,17 @@ public class ScreenDecoder implements Runnable {
                             }
                             // 如果收到停止传屏消息
                             if (ByteUtils.bytesToInt(result) == Constants.STOP_SCREEN_SHARE) {
-                                stop();
                                 continue;
                             }
+                            // 如果收到断开连接消息
+                            if (ByteUtils.bytesToInt(result) == Constants.DISCONNECT) {
+                                stop();
+                                if (cmdListener != null) {
+                                    cmdListener.onReceiveDisconnectCmd();
+                                }
+                            }
 
-                            Log.i(TAG, "run: inputBuffer.remaining()" + inputBuffer.remaining());
                             inputBuffer.put(result);
-                            Log.i(TAG, "run: inputBuffer.remaining()" + inputBuffer.remaining());
 
                             decoder.queueInputBuffer(inputIndex, 0, result.length, 0, 0);
                         }

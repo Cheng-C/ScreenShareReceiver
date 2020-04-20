@@ -10,8 +10,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketAddress;
 import java.util.concurrent.ArrayBlockingQueue;
 
 
@@ -71,8 +73,15 @@ public class TcpConnection {
     }
 
     public void startServer(int port, TcpConnectListener tcpConnectListener) {
+        Log.i(TAG, "startServer");
         try {
-            server = new ServerSocket(port);
+            if (server == null) {
+                server = new ServerSocket();
+                server.setReuseAddress(true);
+                server.bind(new InetSocketAddress(port));
+            }
+
+            Log.i(TAG, "startServer: socket未连接");
             socket = server.accept();
             Log.i(TAG, "startServer: socket已连接");
             if (tcpConnectListener != null) {
@@ -80,6 +89,7 @@ public class TcpConnection {
                 tcpConnectListener.onSocketConnectSuccess();
             }
         } catch (IOException e) {
+            Log.i(TAG, "startServer: exception");
             if (tcpConnectListener != null) {
                 // Socket连接错误
                 tcpConnectListener.onSocketConnectFail(e.getMessage());
@@ -107,6 +117,9 @@ public class TcpConnection {
             if (socket == null) {
                 return;
             }
+            socket.shutdownInput();
+            socket.shutdownOutput();
+            Log.i(TAG, "disconnect");
             socket.close();
             socket = null;
             if (tcpDisconnectListener != null) {
@@ -120,37 +133,8 @@ public class TcpConnection {
         }
     }
 
-    public void startReceiving(ArrayBlockingQueue<byte[]> playQueue) {
-        canReceive = true;
-        while (canReceive) {
-            try {
-                byte[] size = readByte(inputStream, 4);
-                if (size == null || size.length == 0){
-                    continue;
-                }
-                int bufferSize = ByteUtils.bytesToInt(size);
-                if (bufferSize != 0) {
-                    Log.i(TAG, "startReceiving: bufferSize:" + bufferSize);
-                    byte[] encodeData = readByte(inputStream, bufferSize);
-                    // checkQueue(playQueue); // 检查队列空间是否充足
-                    playQueue.put(encodeData);
-                }
-
-            } catch (IOException e) {
-                // 与发送端连接断开
-                canReceive = false;
-                if (tcpConnectListener != null) {
-                    tcpConnectListener.onSocketDisconnect(e.getMessage());
-                }
-                Log.i(TAG, "startReceiving: 与发送端连接断开");
-                e.printStackTrace();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
     public byte[] receiveData() {
+        Log.i(TAG, "receiveData");
         byte[] data = null;
         try {
             byte[] cmd = readByte(inputStream, 4);
@@ -165,7 +149,7 @@ public class TcpConnection {
                 data = readByte(inputStream, bufferSize);
             }
             // 如果收到停止传屏消息
-            if (ByteUtils.bytesToInt(cmd) == Constants.STOP_SCREEN_SHARE) {
+            if (ByteUtils.bytesToInt(cmd) == Constants.STOP_SCREEN_SHARE || ByteUtils.bytesToInt(cmd) == Constants.DISCONNECT) {
                 return cmd;
             }
         } catch (IOException e) {
@@ -173,19 +157,11 @@ public class TcpConnection {
             if (tcpConnectListener != null) {
                 tcpConnectListener.onSocketDisconnect(e.getMessage());
             }
-            Log.i(TAG, "startReceiving: 与发送端连接断开");
+            Log.i(TAG, "receiveData: 与发送端连接断开");
             e.printStackTrace();
         }
 
         return data;
-    }
-
-    private void checkQueue(ArrayBlockingQueue<byte[]> playQueue) throws InterruptedException {
-        if (playQueue.size() > 30) {
-            for (int i = 0; i < 25; i++) {
-                playQueue.take();
-            }
-        }
     }
 
     private byte[] readByte(InputStream inputStream, int readSize) throws IOException {
@@ -198,6 +174,9 @@ public class TcpConnection {
             if (eachLen != -1) {
                 len += eachLen;
                 baos.write(buff, 0, eachLen);
+            } else {
+                // 发送端关闭输出流
+                return ByteUtils.int2Bytes(Constants.DISCONNECT);
             }
             if (len < readSize) {
                 buff = new byte[readSize - len];
@@ -223,7 +202,6 @@ public class TcpConnection {
                 inputStream.close();
                 inputStream = null;
             }
-            canReceive = false;
         } catch (IOException e) {
             e.printStackTrace();
         }

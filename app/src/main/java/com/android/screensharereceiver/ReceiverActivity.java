@@ -1,9 +1,12 @@
 package com.android.screensharereceiver;
 
+import android.graphics.PixelFormat;
 import android.os.Bundle;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Toast;
 
 import com.android.screensharereceiver.common.base.BaseMvpActivity;
@@ -18,6 +21,10 @@ public class ReceiverActivity extends BaseMvpActivity<ReceiverContract.IPresente
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        supportRequestWindowFeature(Window.FEATURE_NO_TITLE);
+        // getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+
         setContentView(R.layout.activity_receiver);
         Toast.makeText(ReceiverActivity.this, "准备连接", Toast.LENGTH_SHORT).show();
         presenter.prepareConnect();
@@ -39,6 +46,9 @@ public class ReceiverActivity extends BaseMvpActivity<ReceiverContract.IPresente
 
             }
         });
+        // 使背景色不为默认黑色
+        surfaceView.setZOrderOnTop(true);
+        surfaceView.getHolder().setFormat(PixelFormat.TRANSLUCENT);
 
     }
 
@@ -64,7 +74,8 @@ public class ReceiverActivity extends BaseMvpActivity<ReceiverContract.IPresente
 
     @Override
     public void onDisconnectSuccess() {
-        Toast.makeText(this, "断开连接成功", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "连接断开", Toast.LENGTH_SHORT).show();
+        presenter.prepareConnect();
     }
 
 }

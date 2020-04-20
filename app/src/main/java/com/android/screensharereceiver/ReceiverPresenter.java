@@ -77,15 +77,18 @@ public class ReceiverPresenter extends BasePresenter<ReceiverContract.IView> imp
                         });
                     }
                 });
-
-                // tcpConnection.startReceiving(playQueue);
             }
         });
     }
 
     @Override
     public void prepareScreenShare(Surface surface) {
-        screenDecoder = new ScreenDecoder(surface);
+        screenDecoder = new ScreenDecoder(surface, new ScreenDecoder.CmdListener() {
+            @Override
+            public void onReceiveDisconnectCmd() {
+                disconnect();
+            }
+        });
         executorService.execute(screenDecoder);
     }
 
