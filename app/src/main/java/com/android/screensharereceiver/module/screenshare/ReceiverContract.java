@@ -1,18 +1,18 @@
-package com.android.screensharereceiver;
+package com.android.screensharereceiver.module.screenshare;
 
+import android.content.Context;
 import android.view.Surface;
 
 import com.android.screensharereceiver.common.base.IBasePresenter;
 import com.android.screensharereceiver.common.base.IBaseView;
 
-import java.util.concurrent.ArrayBlockingQueue;
-
 public class ReceiverContract {
     public interface IPresenter extends IBasePresenter<ReceiverContract.IView> {
-        void prepareConnect();
+        void startUdpService(Context context);
+        void prepareTcpConnect();
+        void disconnect();
         void prepareScreenShare(Surface surface);
         void stopShareShare();
-        void disconnect();
     }
 
     public interface IView extends IBaseView {

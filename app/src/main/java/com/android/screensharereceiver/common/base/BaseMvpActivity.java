@@ -13,6 +13,8 @@ public abstract class BaseMvpActivity<T extends IBasePresenter> extends AppCompa
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         presenter = injectPresenter();
+        initView();
+        initData();
     }
 
     @Override
@@ -30,5 +32,9 @@ public abstract class BaseMvpActivity<T extends IBasePresenter> extends AppCompa
     }
 
     protected abstract T injectPresenter();
+
+    protected abstract void initView();
+
+    protected abstract void initData();
 
 }

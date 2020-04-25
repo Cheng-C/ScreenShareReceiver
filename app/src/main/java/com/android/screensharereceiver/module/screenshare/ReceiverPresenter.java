@@ -1,17 +1,19 @@
-package com.android.screensharereceiver;
+package com.android.screensharereceiver.module.screenshare;
 
 import android.annotation.SuppressLint;
+import android.content.Context;
+import android.content.Intent;
 import android.os.Handler;
-import android.os.Message;
 import android.util.Log;
 import android.view.Surface;
 
-import androidx.annotation.NonNull;
-
 import com.android.screensharereceiver.common.base.BasePresenter;
-import com.android.screensharereceiver.connection.TcpConnection;
+import com.android.screensharereceiver.module.connection.tcp.TcpConnectListener;
+import com.android.screensharereceiver.module.connection.tcp.TcpConnection;
+import com.android.screensharereceiver.module.connection.tcp.TcpDisconnectListener;
+import com.android.screensharereceiver.module.connection.udp.UdpService;
+import com.android.screensharereceiver.module.receiver.ScreenReceiver;
 
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -21,37 +23,35 @@ import java.util.concurrent.TimeUnit;
 public class ReceiverPresenter extends BasePresenter<ReceiverContract.IView> implements ReceiverContract.IPresenter {
 
     private static final String TAG = "ReceiverPresenter";
-    private static final int MESSAGE_UPDATE_UI = 1;
 
     private ExecutorService executorService = null;
     private TcpConnection tcpConnection = TcpConnection.getInstance();
-    private ScreenDecoder screenDecoder;
-    // fair:如果true，则按FIFO顺序处理插入或删除时阻塞的线程的队列访问；如果false，则未指定访问顺序。
-    private ArrayBlockingQueue<byte[]> playQueue = new ArrayBlockingQueue<>(800, true);
-
-    public ReceiverPresenter() {
-        initThreadPool();
-    }
+    private ScreenReceiver screenReceiver;
+//    // fair:如果true，则按FIFO顺序处理插入或删除时阻塞的线程的队列访问；如果false，则未指定访问顺序。
+//    private ArrayBlockingQueue<byte[]> playQueue = new ArrayBlockingQueue<>(800, true);
 
     @SuppressLint("HandlerLeak")
     private Handler updateUiHandler = new Handler();
 
+    public ReceiverPresenter() {
+        Log.i(TAG, "new ReceiverPresenter");
+        initThreadPool();
+    }
+
     @Override
-    public void prepareConnect() {
+    public void startUdpService(Context context) {
+        //开启udp连接服务
+        Intent serverIntent = new Intent(context, UdpService.class);
+        context.startService(serverIntent);
+    }
+
+    @Override
+    public void prepareTcpConnect() {
+        Log.i(TAG, "prepareConnect");
         executorService.execute(new Runnable() {
             @Override
             public void run() {
-                tcpConnection.startServer(9988, new TcpConnection.TcpConnectListener() {
-                    @Override
-                    public void onSocketConnectSuccess() {
-
-                    }
-
-                    @Override
-                    public void onSocketConnectFail(String message) {
-
-                    }
-
+                tcpConnection.startServer(new TcpConnectListener() {
                     @Override
                     public void onTcpConnectSuccess() {
                         updateUiHandler.post(new Runnable() {
@@ -66,45 +66,18 @@ public class ReceiverPresenter extends BasePresenter<ReceiverContract.IView> imp
                     public void onTcpConnectFail(String message) {
 
                     }
-
-                    @Override
-                    public void onSocketDisconnect(String message) {
-                        updateUiHandler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                view.onDisconnectSuccess();
-                            }
-                        });
-                    }
                 });
             }
         });
     }
 
     @Override
-    public void prepareScreenShare(Surface surface) {
-        screenDecoder = new ScreenDecoder(surface, new ScreenDecoder.CmdListener() {
-            @Override
-            public void onReceiveDisconnectCmd() {
-                disconnect();
-            }
-        });
-        executorService.execute(screenDecoder);
-    }
-
-    @Override
-    public void stopShareShare() {
-        if (screenDecoder != null) {
-            screenDecoder.stop();
-        }
-    }
-
-    @Override
     public void disconnect() {
+        Log.i(TAG, "disconnect");
         executorService.execute(new Runnable() {
             @Override
             public void run() {
-                tcpConnection.disconnect(new TcpConnection.TcpDisconnectListener() {
+                tcpConnection.disconnect(new TcpDisconnectListener() {
                     @Override
                     public void onTcpDisconnectSuccess() {
                         updateUiHandler.post(new Runnable() {
@@ -124,7 +97,28 @@ public class ReceiverPresenter extends BasePresenter<ReceiverContract.IView> imp
         });
     }
 
+    @Override
+    public void prepareScreenShare(Surface surface) {
+        Log.i(TAG, "prepareScreenShare");
+        screenReceiver = new ScreenReceiver(surface, new ScreenReceiver.CmdListener() {
+            @Override
+            public void onReceiveDisconnectCmd() {
+                disconnect();
+            }
+        });
+        executorService.execute(screenReceiver);
+    }
+
+    @Override
+    public void stopShareShare() {
+        Log.i(TAG, "stopShareShare");
+        if (screenReceiver != null) {
+            screenReceiver.stop();
+        }
+    }
+
     private void initThreadPool() {
+        Log.i(TAG, "initThreadPool");
         int NUMBER_OF_CORES = Runtime.getRuntime().availableProcessors();
         int KEEP_ALIVE_TIME = 1;
         TimeUnit KEEP_ALIVE_TIME_UNIT = TimeUnit.SECONDS;

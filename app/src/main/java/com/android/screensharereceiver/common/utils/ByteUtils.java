@@ -1,4 +1,4 @@
-package com.android.screensharereceiver.utils;
+package com.android.screensharereceiver.common.utils;
 
 /**
  * Created by wt

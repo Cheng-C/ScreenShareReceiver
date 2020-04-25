@@ -1,4 +1,4 @@
-package com.android.screensharereceiver;
+package com.android.screensharereceiver.common.constant;
 
 public class Constants {
     public static final int SCREEN_SHARE = 1;

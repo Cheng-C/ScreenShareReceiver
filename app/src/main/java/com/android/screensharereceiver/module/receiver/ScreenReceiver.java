@@ -1,4 +1,4 @@
-package com.android.screensharereceiver;
+package com.android.screensharereceiver.module.receiver;
 
 
 import android.media.MediaCodec;
@@ -7,14 +7,12 @@ import android.media.MediaFormat;
 import android.util.Log;
 import android.view.Surface;
 
-import androidx.annotation.NonNull;
-
-import com.android.screensharereceiver.connection.TcpConnection;
-import com.android.screensharereceiver.utils.ByteUtils;
+import com.android.screensharereceiver.module.connection.tcp.TcpConnection;
+import com.android.screensharereceiver.common.constant.Constants;
+import com.android.screensharereceiver.common.utils.ByteUtils;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -25,11 +23,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * 获取屏幕内容，进行编码后发送至传屏接收端
  */
-public class ScreenDecoder implements Runnable {
+public class ScreenReceiver implements Runnable {
 
     private static final String TAG = "ScreenReceiver";
     private Surface surface;
-    private ArrayBlockingQueue<byte[]> playQueue;
     private MediaCodec decoder;
     private int width;
     private int height;
@@ -62,8 +59,9 @@ public class ScreenDecoder implements Runnable {
      * @param bitRate 码率（每秒传送的比特数）
      * @param IFrameInterval I帧间隔
      */
-    public ScreenDecoder(Surface surface, int width, int height, String mimeType, int frameRate,
-                         int bitRate, int IFrameInterval, CmdListener cmdListener) {
+    public ScreenReceiver(Surface surface, int width, int height, String mimeType, int frameRate,
+                          int bitRate, int IFrameInterval, CmdListener cmdListener) {
+        Log.i(TAG, "new ScreenReceiver");
         this.surface = surface;
         this.width = width;
         this.height = height;
@@ -75,12 +73,13 @@ public class ScreenDecoder implements Runnable {
         initThreadPool();
     }
 
-    public ScreenDecoder(Surface surface, CmdListener cmdListener) {
+    public ScreenReceiver(Surface surface, CmdListener cmdListener) {
         this(surface, 1280, 1920, "video/avc", 30,
                 6000000, 10, cmdListener);
     }
 
     private void initThreadPool() {
+        Log.i(TAG, "initThreadPool");
         int NUMBER_OF_CORES = Runtime.getRuntime().availableProcessors();
         int KEEP_ALIVE_TIME = 1;
         TimeUnit KEEP_ALIVE_TIME_UNIT = TimeUnit.SECONDS;
@@ -91,10 +90,12 @@ public class ScreenDecoder implements Runnable {
 
     @Override
     public void run() {
+        Log.i(TAG, "run");
         prepareDecoder();
     }
 
     private void prepareDecoder() {
+        Log.i(TAG, "prepareDecoder");
         // width 内容的宽度(以像素为单位) height 内容的高度(以像素为单位)
         MediaFormat mediaFormat = MediaFormat.createVideoFormat(mimeType, width, height);
         mediaFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
