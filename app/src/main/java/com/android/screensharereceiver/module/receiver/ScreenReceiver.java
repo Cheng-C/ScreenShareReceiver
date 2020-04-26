@@ -40,7 +40,7 @@ public class ScreenReceiver implements Runnable {
     private ByteBuffer inputBuffer;
     private ByteBuffer outputBuffer;
     private MediaFormat inputFormat;
-
+    MediaFormat mediaFormat;
     private ExecutorService executorService;
 
     private TcpConnection tcpConnection = TcpConnection.getInstance();
@@ -48,6 +48,8 @@ public class ScreenReceiver implements Runnable {
 
     public interface CmdListener {
         void onReceiveDisconnectCmd();
+        void onReceiveStartScreenShare();
+        void onReceiveStopScreenShare();
     }
 
     /**
@@ -94,10 +96,16 @@ public class ScreenReceiver implements Runnable {
         prepareDecoder();
     }
 
+    public void reConfigure(Surface surface) {
+        decoder.stop();
+        decoder.configure(mediaFormat, surface, null, 0);
+        decoder.start();
+    }
+
     private void prepareDecoder() {
         Log.i(TAG, "prepareDecoder");
         // width 内容的宽度(以像素为单位) height 内容的高度(以像素为单位)
-        MediaFormat mediaFormat = MediaFormat.createVideoFormat(mimeType, width, height);
+        mediaFormat = MediaFormat.createVideoFormat(mimeType, width, height);
         mediaFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
         mediaFormat.setInteger(MediaFormat.KEY_FRAME_RATE, frameRate);
         mediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, bitRate);
@@ -119,8 +127,14 @@ public class ScreenReceiver implements Runnable {
                             if (result == null) {
                                 continue;
                             }
+                            // 如果收到开始传屏消息
+                            if (ByteUtils.bytesToInt(result) == Constants.START_SCREEN_SHARE) {
+                                cmdListener.onReceiveStartScreenShare();
+                                continue;
+                            }
                             // 如果收到停止传屏消息
                             if (ByteUtils.bytesToInt(result) == Constants.STOP_SCREEN_SHARE) {
+                                cmdListener.onReceiveStopScreenShare();
                                 continue;
                             }
                             // 如果收到断开连接消息

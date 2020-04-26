@@ -24,6 +24,8 @@ public class ReceiverPresenter extends BasePresenter<ReceiverContract.IView> imp
 
     private static final String TAG = "ReceiverPresenter";
 
+    private static final String SS_CODE = "ssCode";
+
     private ExecutorService executorService = null;
     private TcpConnection tcpConnection = TcpConnection.getInstance();
     private ScreenReceiver screenReceiver;
@@ -39,9 +41,10 @@ public class ReceiverPresenter extends BasePresenter<ReceiverContract.IView> imp
     }
 
     @Override
-    public void startUdpService(Context context) {
+    public void startUdpService(Context context, String ssCode) {
         //开启udp连接服务
         Intent serverIntent = new Intent(context, UdpService.class);
+        serverIntent.putExtra(SS_CODE, ssCode);
         context.startService(serverIntent);
     }
 
@@ -105,6 +108,26 @@ public class ReceiverPresenter extends BasePresenter<ReceiverContract.IView> imp
             public void onReceiveDisconnectCmd() {
                 disconnect();
             }
+
+            @Override
+            public void onReceiveStartScreenShare() {
+                updateUiHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        view.onStartScreenShare();
+                    }
+                });
+            }
+
+            @Override
+            public void onReceiveStopScreenShare() {
+                updateUiHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        view.onStopScreenShare();
+                    }
+                });
+            }
         });
         executorService.execute(screenReceiver);
     }
@@ -115,6 +138,11 @@ public class ReceiverPresenter extends BasePresenter<ReceiverContract.IView> imp
         if (screenReceiver != null) {
             screenReceiver.stop();
         }
+    }
+
+    @Override
+    public void reConfigureDecoder(Surface surface) {
+        screenReceiver.reConfigure(surface);
     }
 
     private void initThreadPool() {

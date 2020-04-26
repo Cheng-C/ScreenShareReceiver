@@ -1,6 +1,7 @@
 package com.android.screensharereceiver.module.screenshare;
 
 import android.graphics.PixelFormat;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -13,9 +14,12 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.RequiresApi;
+
 import com.android.screensharereceiver.R;
 import com.android.screensharereceiver.common.base.BaseMvpActivity;
 import com.android.screensharereceiver.common.utils.AboutNetUtils;
+import com.android.screensharereceiver.common.utils.RandomUtils;
 
 public class ReceiverActivity extends BaseMvpActivity<ReceiverContract.IPresenter> implements ReceiverContract.IView {
 
@@ -23,11 +27,12 @@ public class ReceiverActivity extends BaseMvpActivity<ReceiverContract.IPresente
 
     private SurfaceView surfaceView;
     private LinearLayout llMessage;
+    private TextView tvSsCode;
     private TextView tvDeviceName;
-    private TextView tvIpAddress;
 
     private Surface surface;
 
+    private String ssCode;
     private String currentIP;
 
     @Override
@@ -58,12 +63,13 @@ public class ReceiverActivity extends BaseMvpActivity<ReceiverContract.IPresente
         setContentView(R.layout.activity_receiver);
 
         llMessage = findViewById(R.id.llMessage);
+        tvSsCode = findViewById(R.id.tvSsCode);
         tvDeviceName = findViewById(R.id.tvDeviceName);
-        tvIpAddress = findViewById(R.id.tvIpAddress);
 
         surfaceView = findViewById(R.id.surface);
         //surfaceView.setVisibility(View.GONE);
         surfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
+            @RequiresApi(api = Build.VERSION_CODES.M)
             @Override
             public void surfaceCreated(SurfaceHolder holder) {
                 surface = holder.getSurface();
@@ -81,25 +87,22 @@ public class ReceiverActivity extends BaseMvpActivity<ReceiverContract.IPresente
         });
         // 使背景色不为默认黑色
         surfaceView.setZOrderOnTop(true);
-        surfaceView.getHolder().setFormat(PixelFormat.TRANSLUCENT);
+        surfaceView.getHolder().setFormat(PixelFormat.TRANSPARENT);
     }
 
     @Override
     protected void initData() {
         currentIP = AboutNetUtils.getLocalIpAddress();
+        ssCode = RandomUtils.getRandomString(6);
+        tvSsCode.setText("传屏码：" + ssCode);
         if (!TextUtils.isEmpty(AboutNetUtils.getDeviceModel())) {
-            tvDeviceName.setText(AboutNetUtils.getDeviceModel());
+            tvDeviceName.setText("设备：" + AboutNetUtils.getDeviceModel());
         } else {
             tvDeviceName.setText("未知设备");
         }
-        if (!TextUtils.isEmpty(currentIP)) {
-            tvIpAddress.setText("IP：" + currentIP);
-        } else {
-            tvIpAddress.setText("未知IP");
-        }
 
         Toast.makeText(this, "连接准备", Toast.LENGTH_SHORT).show();
-        presenter.startUdpService(this);
+        presenter.startUdpService(this, ssCode);
         presenter.prepareTcpConnect();
     }
 
@@ -118,6 +121,16 @@ public class ReceiverActivity extends BaseMvpActivity<ReceiverContract.IPresente
         llMessage.setVisibility(View.VISIBLE);
         surfaceView.setVisibility(View.GONE);
         presenter.prepareTcpConnect();
+    }
+
+    @Override
+    public void onStartScreenShare() {
+
+    }
+
+    @Override
+    public void onStopScreenShare() {
+        Toast.makeText(this, "传屏停止", Toast.LENGTH_SHORT).show();
     }
 
 }

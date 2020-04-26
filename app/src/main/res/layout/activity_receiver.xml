@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -22,50 +21,32 @@
         android:orientation="vertical">
 
         <TextView
-            android:id="@+id/tvDeviceName"
+            android:id="@+id/tvSsCode"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="设备名称：null"
-            android:textColor="#fff"
-            android:textSize="56px"
+            android:text="传屏码"
+            android:textColor="@android:color/white"
+            android:textSize="24dp"
             android:textStyle="bold" />
 
         <TextView
-            android:id="@+id/tvIpAddress"
+            android:id="@+id/tvDeviceName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="46px"
-            android:text="Wife:null"
-            android:textColor="#00ae9d" />
+            android:layout_marginTop="16dp"
+            android:text="设备名称"
+            android:textColor="@android:color/white"
+            android:textSize="18dp"
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/tvTips"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="46px"
-            android:text="提示：请将设备连接同一网络"
-            android:textColor="#fff" />
+            android:layout_marginTop="16dp"
+            android:text="提示：请将手机与投屏设备连接同一网络"
+            android:textColor="@android:color/white" />
 
     </LinearLayout>
-
-
-    <TextView
-        android:id="@+id/tv_net_speed"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="200px"
-        android:layout_marginLeft="100px"
-        android:textColor="#fcc"/>
-
-    <TextView
-        android:id="@+id/tv_client_device_name"
-        android:layout_width="match_parent"
-        android:background="#e0000000"
-        android:text=""
-        android:textColor="#fff"
-        android:gravity="center"
-        android:textSize="30px"
-        android:visibility="gone"
-        android:layout_height="50px" />
 
 </RelativeLayout>

@@ -98,8 +98,10 @@ public class TcpConnection {
                 Log.i(TAG, "receiveData: bufferSize:" + bufferSize);
                 data = readByte(inputStream, bufferSize);
             }
-            // 如果收到停止传屏或断开连接消息，将消息返回给调用处进行处理
-            if (ByteUtils.bytesToInt(cmd) == Constants.STOP_SCREEN_SHARE || ByteUtils.bytesToInt(cmd) == Constants.DISCONNECT) {
+            // 如果收到开始传屏、停止传屏或断开连接消息，将消息返回给调用处进行处理
+            if (ByteUtils.bytesToInt(cmd) == Constants.START_SCREEN_SHARE ||
+                    ByteUtils.bytesToInt(cmd) == Constants.STOP_SCREEN_SHARE ||
+                    ByteUtils.bytesToInt(cmd) == Constants.DISCONNECT) {
                 return cmd;
             }
         } catch (IOException e) {
@@ -110,6 +112,7 @@ public class TcpConnection {
     }
 
     private byte[] readByte(InputStream inputStream, int readSize) throws IOException {
+        Log.i(TAG, "readByte");
         byte[] buff = new byte[readSize];
         int len = 0;
         int eachLen;

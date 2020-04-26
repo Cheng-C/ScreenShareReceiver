@@ -20,11 +20,14 @@ import java.net.UnknownHostException;
 
 
 /**
- * Created by wt on 2018/7/11.
+ *
  */
 public class UdpService extends Service implements OnUdpConnectListener {
     
     private static final String TAG = "UdpService";
+    private static final String SS_CODE = "ssCode";
+
+    private String ssCode;
     private Handler mHandler;
     //服务端的ip
     private String ip = null;
@@ -53,6 +56,7 @@ public class UdpService extends Service implements OnUdpConnectListener {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         // TODO Auto-generated method stub
+        ssCode = intent.getStringExtra(SS_CODE);
         initData();
         return super.onStartCommand(intent, flags, startId);
     }
@@ -76,7 +80,7 @@ public class UdpService extends Service implements OnUdpConnectListener {
         }
         if (ip != null) {
             //开始广播
-            new UdpBroadcastThread(context, ip, inetAddress, multicastSocket,
+            new UdpBroadcastThread(context, ip, ssCode, inetAddress, multicastSocket,
                     BROADCAST_PORT, weakHandler, this);
         }
     }
@@ -89,7 +93,7 @@ public class UdpService extends Service implements OnUdpConnectListener {
     @Override
     public void udpDisConnect() {
         // TODO: 2018/7/11 连接失败
-        Log.e("123", "udpDisConnect: 连接失败");
+        Log.e(TAG, "udpDisConnect: 连接失败");
         initData();
     }
     /**
