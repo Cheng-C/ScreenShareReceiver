@@ -125,24 +125,29 @@ public class ScreenReceiver implements Runnable {
                             // 获取数据
                             byte[] result = tcpConnection.receiveData();
                             if (result == null) {
+                                decoder.queueInputBuffer(inputIndex, 0, 0, 0, 0);
                                 continue;
                             }
                             // 如果收到开始传屏消息
                             if (ByteUtils.bytesToInt(result) == Constants.START_SCREEN_SHARE) {
+                                decoder.queueInputBuffer(inputIndex, 0, 0, 0, 0);
                                 cmdListener.onReceiveStartScreenShare();
                                 continue;
                             }
                             // 如果收到停止传屏消息
                             if (ByteUtils.bytesToInt(result) == Constants.STOP_SCREEN_SHARE) {
+                                decoder.queueInputBuffer(inputIndex, 0, 0, 0, 0);
                                 cmdListener.onReceiveStopScreenShare();
                                 continue;
                             }
                             // 如果收到断开连接消息
                             if (ByteUtils.bytesToInt(result) == Constants.DISCONNECT) {
+                                decoder.queueInputBuffer(inputIndex, 0, 0, 0, 0);
                                 stop();
                                 if (cmdListener != null) {
                                     cmdListener.onReceiveDisconnectCmd();
                                 }
+                                continue;
                             }
 
                             inputBuffer.put(result);

@@ -88,14 +88,15 @@ public class TcpConnection {
         byte[] data = null;
         try {
             byte[] cmd = readByte(inputStream, 4);
+            Log.i(TAG, "receiveData: cmd: " + ByteUtils.bytesToInt(cmd));
             byte[] size = readByte(inputStream, 4);
             if (size == null || size.length == 0){
                 return null;
             }
             int bufferSize = ByteUtils.bytesToInt(size);
 
+            Log.i(TAG, "receiveData: bufferSize:" + bufferSize);
             if (bufferSize != 0) {
-                Log.i(TAG, "receiveData: bufferSize:" + bufferSize);
                 data = readByte(inputStream, bufferSize);
             }
             // 如果收到开始传屏、停止传屏或断开连接消息，将消息返回给调用处进行处理
@@ -105,6 +106,7 @@ public class TcpConnection {
                 return cmd;
             }
         } catch (IOException e) {
+            Log.i(TAG, "receiveData: 异常");
             e.printStackTrace();
         }
 
