@@ -76,7 +76,7 @@ public class ScreenReceiver implements Runnable {
     }
 
     public ScreenReceiver(Surface surface, CmdListener cmdListener) {
-        this(surface, 1280, 1920, "video/avc", 30,
+        this(surface, 360, 640, "video/avc", 30,
                 6000000, 10, cmdListener);
     }
 
