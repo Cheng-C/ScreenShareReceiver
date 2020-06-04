@@ -96,12 +96,6 @@ public class ScreenReceiver implements Runnable {
         prepareDecoder();
     }
 
-    public void reConfigure(Surface surface) {
-        decoder.stop();
-        decoder.configure(mediaFormat, surface, null, 0);
-        decoder.start();
-    }
-
     private void prepareDecoder() {
         Log.i(TAG, "prepareDecoder");
         // width 内容的宽度(以像素为单位) height 内容的高度(以像素为单位)

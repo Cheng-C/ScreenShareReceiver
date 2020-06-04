@@ -140,11 +140,6 @@ public class ReceiverPresenter extends BasePresenter<ReceiverContract.IView> imp
         }
     }
 
-    @Override
-    public void reConfigureDecoder(Surface surface) {
-        screenReceiver.reConfigure(surface);
-    }
-
     private void initThreadPool() {
         Log.i(TAG, "initThreadPool");
         int NUMBER_OF_CORES = Runtime.getRuntime().availableProcessors();

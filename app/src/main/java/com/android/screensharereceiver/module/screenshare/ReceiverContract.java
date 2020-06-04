@@ -13,7 +13,6 @@ public class ReceiverContract {
         void disconnect();
         void prepareScreenShare(Surface surface);
         void stopShareShare();
-        void reConfigureDecoder(Surface surface);
     }
 
     public interface IView extends IBaseView {
